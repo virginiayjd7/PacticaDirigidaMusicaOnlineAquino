@@ -1,5 +1,14 @@
 package com.desarrollo.pacticadirigidamusicaonlineaquino;
 
+import android.Manifest;
+import android.content.Context;
+import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.net.Uri;
+import android.os.Bundle;
+import android.provider.MediaStore;
+import android.util.Log;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -10,23 +19,19 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
-import android.Manifest;
-import android.content.pm.PackageManager;
-import android.os.Bundle;
-import android.widget.Toast;
-
 import com.google.android.material.tabs.TabLayout;
 
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 public  static  final  int REQUEST_CODE=1;
+public  static  ArrayList<MusicFiles>musicFiles;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         permission();
-        initViewPager();
+
 
     }
 
@@ -38,7 +43,9 @@ public  static  final  int REQUEST_CODE=1;
             .permission.WRITE_EXTERNAL_STORAGE},REQUEST_CODE);
         }
         else {
-            Toast.makeText(this,"Permission granted",Toast.LENGTH_SHORT).show();
+
+             musicFiles=getALLAudio(this);
+            initViewPager();
         }
 
     }
@@ -49,7 +56,9 @@ public  static  final  int REQUEST_CODE=1;
         super.onRequestPermissionsResult(requestCode,permissions,grantResults);
         if (requestCode==REQUEST_CODE){
             if(grantResults[0]== PackageManager.PERMISSION_GRANTED){
-                Toast.makeText(this,"Permission granted",Toast.LENGTH_SHORT).show();
+
+                musicFiles=getALLAudio(this);
+                initViewPager();
             }
             else {
                 ActivityCompat.requestPermissions(MainActivity.this,new String[]{Manifest
@@ -95,5 +104,34 @@ public  static  final  int REQUEST_CODE=1;
             return titles.get(position);
 
         }
+    }
+    public  static  ArrayList<MusicFiles> getALLAudio(Context context){
+        ArrayList<MusicFiles> tempAudioList=new ArrayList<>();
+        Uri uri= MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+        String[] projection= {
+                MediaStore.Audio.Media.ALBUM,
+                MediaStore.Audio.Media.TITLE,
+                MediaStore.Audio.Media.DURATION,
+                MediaStore.Audio.Media.DATA,
+                MediaStore.Audio.Media.ARTIST,
+        };
+        Cursor cursor=context.getContentResolver().query(uri,projection, null, null, null);
+        if(cursor !=null){
+            while (cursor.moveToNext()){
+                String album=cursor.getString(0);
+                String title=cursor.getString(1);
+                String duration=cursor.getString(2);
+                String path=cursor.getString(3);
+                String artist=cursor.getString(4);
+
+                MusicFiles musicFiles=new MusicFiles(path,title,artist,album,duration);
+
+                Log.e("Path:"+ path,"Album");
+                tempAudioList.add(musicFiles);
+            }
+            cursor.close();
+        }
+      return tempAudioList;
+
     }
 }
